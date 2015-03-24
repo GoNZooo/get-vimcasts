@@ -30,7 +30,6 @@
     [(list expr exprs ...)
      (find-all/recursive exprs element-type)]))
 
-
 (define (find-link xexprs filetype)
   (find-filetype-link (find-all/recursive xexprs 'a)
 		      filetype))
@@ -41,13 +40,11 @@
       (cons link-text link-ref)]
     [_ (cons #f #f)]))
 
-
 (define (find-filetype-link links filetype)
   (cdr (link-info (car (filter (lambda (link)
 				 (regexp-match? (pregexp filetype)
 						(cdr (link-info link))))
 			       links)))))
-
 
 (define (download-cast episode-number filetype)
   (define full-dir-url (format "~a~a/"
