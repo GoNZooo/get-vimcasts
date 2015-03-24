@@ -18,42 +18,42 @@
 		       get-pure-port
 		       read-html-as-xml)))
 
-(define (find-all/recursive root element-type)
+(define (find* root element-type)
   (match root
     ['() '()]
     [(list (list sub-exprs ...) exprs ...)
-     (append (find-all/recursive sub-exprs element-type)
-	     (find-all/recursive exprs element-type))]
+     (append (find* sub-exprs element-type)
+	     (find* exprs element-type))]
     [(list expr exprs ...)
      #:when (equal? element-type expr)
-     (append `((,expr ,exprs)) (find-all/recursive exprs element-type))]
+     (append `((,expr ,exprs)) (find* exprs element-type))]
     [(list expr exprs ...)
-     (find-all/recursive exprs element-type)]))
+     (find* exprs element-type)]))
 
 (define (find-link xexprs filetype)
-  (find-filetype-link (find-all/recursive xexprs 'a)
+  (filetype-link (find* xexprs 'a)
 		      filetype))
 
-(define (link-info link)
+(define (link-data link)
   (match link
     [`(a (((href ,link-ref)) ,link-text))
       (cons link-text link-ref)]
     [_ (cons #f #f)]))
 
-(define (find-filetype-link links filetype)
-  (cdr (link-info (car (filter (lambda (link)
+(define (filetype-link links filetype)
+  (cdr (link-data (car (filter (lambda (link)
 				 (regexp-match? (pregexp filetype)
-						(cdr (link-info link))))
+						(cdr (link-data link))))
 			       links)))))
 
 (define (download-cast episode-number filetype)
-  (define full-dir-url (format "~a~a/"
+  (define dir-url (format "~a~a/"
 			       "http://media.vimcasts.org/videos/"
 			       episode-number))
-  (define filename (find-filetype-link (find-all/recursive (url->xexprs full-dir-url)
+  (define filename (filetype-link (find* (url->xexprs dir-url)
 							   'a)
 				       filetype))
-  (define download-url (string-append full-dir-url filename))
+  (define download-url (string-append dir-url filename))
 
   (system (format "http --download ~a --output ~a_~a"
 		  download-url episode-number filename)
