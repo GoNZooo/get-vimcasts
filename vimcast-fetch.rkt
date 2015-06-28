@@ -3,6 +3,8 @@
 (require racket/match
          racket/list
          racket/system
+         racket/file
+         racket/cmdline
          gonz/human-time
          gonz/html-tree)
 
@@ -22,7 +24,7 @@
   (filetype-link (find* xexprs 'a)
                  filetype))
 
-(define (download-cast episode-number filetype)
+(define (download-cast episode-number filetype output-path)
   (define dir-url (format "~a~a/"
                           "http://media.vimcasts.org/videos/"
                           episode-number))
@@ -31,13 +33,22 @@
                                   filetype))
   (define download-url (string-append dir-url filename))
 
-  (system (format "http --download ~a --output ~a_~a"
-                  download-url episode-number filename)
+  (system (format "http --download ~a --output ~a/~a_~a"
+                  download-url output-path episode-number filename)
           #:set-pwd? #t))
+
+(define (commandline-assemble)
+  (command-line
+    #:program "get-vimcasts"
+    #:args (output-path)
+
+    output-path))
 
 (module+ main
   (define episode-numbers (range 1 68))
+  (define out-path (commandline-assemble))
+  (make-directory* out-path)
   (for-each (lambda (episode-number)
-              (download-cast episode-number "m4v")
-              (sleep (human-time 1m)))
+              (download-cast episode-number "m4v" out-path)
+              (sleep (human-time 10s)))
             episode-numbers))
